@@ -187,9 +187,10 @@ def golden_cross(stockTicker, n1, n2, days, direction=""):
     ema1 = ta.trend.ema_indicator(price, n=int(n1), fillna=False)
     ema2 = ta.trend.ema_indicator(price, n=int(n2), fillna=False)
 
-    macd_inst = ta.trend.MACD(price, n_fast=int(n1), n_slow=int(n2), n_sign=int(n1), fillna=False)
     macd = ta.trend.macd(price, n_slow=int(n2), n_fast=int(n1), fillna=False)
     macd_signal = ta.trend.macd_signal(price, n_slow=int(n2), n_fast=int(n1), fillna=False)
+
+    # rsi = ta.momentum.rsi(price, n=14, fillna=False)
 
     series = [price.rename("Price"), ema1.rename("Indicator1"), ema2.rename("Indicator2"), dates.rename("Dates")]
     df = pd.concat(series, axis=1)
