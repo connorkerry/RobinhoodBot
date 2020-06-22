@@ -9,6 +9,8 @@ from misc import *
 from tradingstats import *
 from dotenv import load_dotenv
 import os
+import time as time
+import sys
 
 load_dotenv()
 email = os.environ.get("rh-email")
@@ -252,7 +254,7 @@ def buy_holdings(potential_buys, profile_data, holdings_data):
         print("####### Buying " + str(num_shares) + " shares of " + potential_buys[i] + " #######")
         # r.order_buy_market(potential_buys[i], num_shares)
 
-def scan_stocks():
+def scan_stocks(period):
     """ The main method. Sells stocks in your portfolio if their 50 day moving average crosses
         below the 200 day, and buys stocks in your watchlist if the opposite happens.
 
@@ -277,7 +279,7 @@ def scan_stocks():
     print("Current Watchlist: " + str(watchlist_symbols) + "\n")
     print("----- Scanning portfolio for stocks to sell -----\n")
     for symbol in (portfolio_symbols + watchlist_symbols):
-        cross = golden_cross(symbol, n1=9, n2=15, days=1, direction="below")
+        cross = golden_cross(symbol, n1=9, n2=15, days=period, direction="below")
         if(cross == -1):
             sell_holdings(symbol, holdings_data)
             sells.append(symbol)
@@ -285,7 +287,7 @@ def scan_stocks():
     print("\n----- Scanning watchlist for stocks to buy -----\n")
     for symbol in watchlist_symbols:
         if(symbol not in portfolio_symbols):
-            cross = golden_cross(symbol, n1=9, n2=15, days=1, direction="above")
+            cross = golden_cross(symbol, n1=9, n2=15, days=period, direction="above")
             if(cross == 1):
                 potential_buys.append(symbol)
     if(len(potential_buys) > 0):
@@ -295,4 +297,35 @@ def scan_stocks():
     print("----- Scan over -----\n")
 
 #execute the scan
-scan_stocks()
+# scan_stocks()
+
+# The notifier function
+def notify(title, subtitle, message):
+    t = '-title {!r}'.format(title)
+    s = '-subtitle {!r}'.format(subtitle)
+    m = '-message {!r}'.format(message)
+    os.system('terminal-notifier {} sound name "Submarine"'.format(' '.join([m, t, s])))
+
+def main():
+    while (True):
+        # notify mac os of robinhood scan
+        notify(title = 'Robinhood Bot',
+            subtitle = dt.now().strftime("%H:%M:%S - %d %B %Y"),
+            message  = 'Searching for buy/sell signals...')
+        
+        # Set period to search for signals
+        period = 1
+        if len(sys.argv) > 1:
+            period = int(sys.argv[1])
+        
+        # Scan portfolio + watchlist for buy/sell signals
+        scan_stocks(period)
+
+        # If more than one cl argument, run as script --> terminate loop
+        if len(sys.argv) > 2:
+            break
+
+        # sleep time to scan every hour on the hour
+        time.sleep(3600.0 - time.time() % 3600)
+
+main()
